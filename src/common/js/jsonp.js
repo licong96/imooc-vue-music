@@ -14,6 +14,7 @@ export default function jsonp(url, data, option) {
   })
 }
 
+// 解析data拼接到url上
 function param (data) {
   let url = ''
   for (var k in data) {
