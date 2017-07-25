@@ -1,17 +1,3 @@
-// export function addClass (el, className) {
-//   if (hasClass(el, className)) {
-//     return        // 有这个class就什么都不做
-//   }
-//   let newClass = el.className.split(' ')      // 先拆分成一个数组
-//   newClass.push(className)
-//   el.className = newClass.join(' ')          // 再拼接在一起
-// }
-//
-// export function hasClass(el, className) {
-//   let reg = new RegExp('(^|\\s)' + className + '(\\s|$)')   // 空白字符开头，就表示有这个class
-//   return reg.test(el.className)
-// }
-
 //  * classie.has( elem, 'my-class' ) -> true/false
 //  * classie.add( elem, 'my-new-class' )
 //  * classie.remove( elem, 'my-unwanted-class' )
@@ -63,4 +49,14 @@ export const classie = {
   add: addClass,
   remove: removeClass,
   toggle: toggleClass
+}
+
+// 获取data自定义属性
+export function getData(el, name, val) {
+  const prefix = 'data-'
+  if (val) {
+    return el.setAttribute(prefix + name, val)
+  } else {
+    return el.getAttribute(prefix + name)
+  }
 }

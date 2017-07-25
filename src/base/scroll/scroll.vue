@@ -21,6 +21,10 @@ export default {
     data: {
       type: Array,
       default: null
+    },
+    listemScroll: {
+      type: Boolean,
+      default: false
     }
   },
   mounted() {
@@ -37,6 +41,14 @@ export default {
         probeType: this.probeType,
         click: this.click
       })
+
+      // 监听scroll滚动事件
+      if (this.listemScroll) {
+        let self = this
+        this.scroll.on('scroll', (pos) => {
+          self.$emit('scroll', pos)           // 派发事件，输出位置
+        })
+      }
     },
     enable() {
       this.scroll && this.scroll.enable()    // 启用
@@ -46,6 +58,12 @@ export default {
     },
     refresh() {
       this.scroll && this.scroll.refresh()  // 重新计算
+    },
+    scrollTo() {
+      this.scroll && this.scroll.scrollTo.apply(this.scroll, arguments)
+    },
+    scrollToElement() {
+      this.scroll && this.scroll.scrollToElement.apply(this.scroll, arguments)
     }
   },
   watch: {
@@ -58,5 +76,5 @@ export default {
 }
 </script>
 
-<style lang="css">
+<style scoped lang="scss" rel="stylesheet/scss">
 </style>

@@ -147,20 +147,4 @@ export default {
     width: 100%;
     transform: translateY(-50%);
   }
-
-  // 图片加载动画
-  .loadimg[lazy=loaded] {
-    animation: loader 1s both;
-  }
-
-  @keyframes loader {
-    from {
-      opacity: 0;
-      filter: blur(5px);
-    }
-    to {
-      opacity: 1;
-      filter: blur(0);
-    }
-  }
 </style>
