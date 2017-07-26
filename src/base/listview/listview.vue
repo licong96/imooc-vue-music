@@ -10,7 +10,7 @@
       <li v-for="group in data" class="list-group" ref="listGroup">
         <h2 class="list-group-title">{{group.title}}</h2>
         <ul>
-          <li v-for="item in group.items" class="list-group-item">
+          <li @click="selectItem(item)" v-for="item in group.items" class="list-group-item">
             <img class="avatar loadimg" v-lazy="item.avatar">
             <span class="name">{{item.name}}</span>
           </li>
@@ -27,17 +27,23 @@
       </ul>
     </div>
     <!-- 浮动在顶部的标题 -->
-    <div class="list-fixed" v-show="fixedTitle">
+    <div class="list-fixed" v-show="fixedTitle" ref="fixed">
       <h1 class="fixed-title">{{fixedTitle}}</h1>
+    </div>
+    <!-- loading -->
+    <div class="loading-container" v-show="!data.length">
+      <loading></loading>
     </div>
   </scroll>
 </template>
 
 <script>
   import Scroll from 'base/scroll/scroll'
+  import Loading from 'base/loading/loading'
   import {getData} from 'common/js/dom'
 
   const ANCHOR_HEIGHT = 18    // 每个右字母导航高度
+  const TITLE_HEIGHT = 30     // 浮动标题的高度
 
   export default {
     props: {
@@ -49,7 +55,8 @@
     data() {
       return {
         scrollY: -1,        // 滚动的位置
-        currentIndex: 0     // 滚动的index
+        currentIndex: 0,     // 滚动的index
+        diff: -1
       }
     },
     created() {
@@ -72,6 +79,9 @@
       }
     },
     methods: {
+      selectItem(item) {        // 点击事件配发指定的页面，实现路由跳转
+        this.$emit('select', item)
+      },
       onShortcutTouchStart(e) {   // 按下
         let anchorIndex = getData(e.target, 'index')   // 按下的位置
         let firstTouch = e.touches[0]
@@ -133,15 +143,27 @@
           let height2 = listHeight[i + 1]
           if (-newY >= height1 && -newY < height2) {
             this.currentIndex = i
+            this.diff = height2 + newY        // 浮动标题
             // console.log(this.currentIndex)
             return
           }
         }
-        this.currentIndex = 0
+        // 当滚动到底部，且-newY大于最后一个元素的上限
+        this.currentIndex = listHeight.length - 2
+      },
+      diff (newVal) {
+        let fixedTop = (newVal > 0 && newVal < TITLE_HEIGHT) ? newVal - TITLE_HEIGHT : 0
+        if (this.fixedTop === fixedTop) {
+          return
+        }
+        this.fixedTop = fixedTop
+        console.log(fixedTop)
+        this.$refs.fixed.style.transform = `translate3d(0, ${fixedTop}px, 0)`
       }
     },
     components: {
-      Scroll
+      Scroll,
+      Loading
     }
   }
 </script>

@@ -1,7 +1,11 @@
 <template lang="html">
   <!-- 歌手页面 -->
   <div class="singer">
-    <list-view :data="singers"></list-view>
+    <list-view @select="selectSinger" :data="singers"></list-view>
+    <!-- 挂载歌手详细页子路由 -->
+    <transition name="singer">
+      <router-view></router-view>
+    </transition>
   </div>
 </template>
 
@@ -24,6 +28,12 @@
       this._getSingerList()
     },
     methods: {
+      selectSinger(singer) {      // 接收 listview派送的事件，实现路由跳转
+        console.log(singer)
+        this.$router.push({
+          path: `/singer/${singer.id}`
+        })
+      },
       _getSingerList() {
         getSingerList().then((res) => {
           if (res.code === ERR_OK) {
@@ -96,5 +106,14 @@
     width: 100%;
     top: 88px;
     bottom: 0;
+  }
+
+  .singer-enter-active,
+  .singer-leave-active{
+    transition: all 0.3s;
+  }
+  .singer-enter,
+  .singer-leave-to{
+    transform: translate3d(100%, 0, 0);
   }
 </style>
