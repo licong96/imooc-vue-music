@@ -14,6 +14,7 @@
   import {ERR_OK} from 'api/config'
   import Singer from 'common/js/singer'
   import ListView from 'base/listview/listview'
+  import {mapMutations} from 'vuex'
 
   const HOT_NAME = '热门'
   const HOT_SINGER_LEN = 10
@@ -29,10 +30,10 @@
     },
     methods: {
       selectSinger(singer) {      // 接收 listview派送的事件，实现路由跳转
-        console.log(singer)
         this.$router.push({
           path: `/singer/${singer.id}`
         })
+        this.setSinger(singer)    // 存入vuex
       },
       _getSingerList() {
         getSingerList().then((res) => {
@@ -92,7 +93,10 @@
           return a.title.charCodeAt(0) - b.title.charCodeAt(0)
         })
         return hot.concat(ret)    // concat 方法用于连接多个数组
-      }
+      },
+      ...mapMutations({
+        setSinger: 'SET_SINGER'
+      })
     },
     components: {
       ListView

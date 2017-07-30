@@ -93,7 +93,7 @@
         let firstTouch = e.touches[0]
         this.touch.y2 = firstTouch.pageY    // 拿到滑动时的Y值
         let delta = (this.touch.y2 - this.touch.y1) / ANCHOR_HEIGHT | 0   // | 0表示向下取整
-        let anchorIndex = parseInt(this.touch.anchorIndex) + delta
+        let anchorIndex = parseInt(this.touch.anchorIndex) + delta    // 保存抬起的index位置
         this._scrollTo(anchorIndex)
         this.currentIndex = anchorIndex
       },
@@ -157,7 +157,6 @@
           return
         }
         this.fixedTop = fixedTop
-        console.log(fixedTop)
         this.$refs.fixed.style.transform = `translate3d(0, ${fixedTop}px, 0)`
       }
     },
