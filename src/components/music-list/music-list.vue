@@ -27,7 +27,7 @@
     :data="songs"
     ref="list">
       <div class="song-list-wrapper">
-        <song-list :songs="songs"></song-list>
+        <song-list @select="selectItem" :songs="songs"></song-list>
       </div>
     </scroll>
     <!-- loading -->
@@ -40,6 +40,7 @@
   import SongList from 'base/song-list/song-list'
   import Loading from 'base/loading/loading'
   import {prefixStyle} from 'common/js/dom'
+  import {mapActions} from 'vuex'
 
   const RESERVED_HEIGHT = 40      // 滑动距离顶部title高度
   const transform = prefixStyle('transform')    // 浏览器前缀
@@ -87,7 +88,16 @@
       },
       back () {
         this.$router.back()
-      }
+      },
+      selectItem (item, index) {    // 子组件事件，打开播放器
+        this.selectPlay({
+          list: this.songs,     // list事整个数据
+          index
+        })
+      },
+      ...mapActions([
+        'selectPlay'
+      ])
     },
     watch: {
       scrollY (newY) {

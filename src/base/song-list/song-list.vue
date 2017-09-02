@@ -2,7 +2,7 @@
   <!-- 一个公用列表 -->
   <section class="song-list">
     <ul>
-      <li v-for="song in songs" class="item">
+      <li @click="selectItem(song, index)" v-for="(song, index) in songs" class="item">
         <div class="content">
           <h2 class="name">{{song.name}}</h2>
           <p class="desc">{{getDesc(song)}}</p>
@@ -21,6 +21,9 @@
       }
     },
     methods: {
+      selectItem (item, index) {    // 打开播放
+        this.$emit('select', item, index)
+      },
       getDesc (song) {
         return `${song.singer} . ${song.album}`
       }
