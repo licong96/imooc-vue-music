@@ -23,7 +23,7 @@
         <div class="middle">
           <div class="middle-l">
             <div class="cd-wrapper" ref="cdWrapper">
-              <div class="cd">
+              <div class="cd" :class="cdCls">
                 <img class="image" :src="currentSong.image">
               </div>
             </div>
@@ -31,18 +31,26 @@
         </div>
         <!-- 播放器按钮 -->
         <div class="bottom">
+          <!-- 播放进度条 -->
+          <div class="progress-wrapper">
+            <span class="time time-l">{{format(currentTime)}}</span> <!-- 当前播放时长 -->
+            <div class="progress-bar-wrapper">
+            </div>
+            <span class="time time-r">{{format(currentSong.duration)}}</span> <!-- 总时长 -->
+          </div>
+          <!-- 操作按钮 -->
           <div class="operators">
             <div class="icon i-left">
               <i class="icon-sequence"></i>
             </div>
-            <div class="icon i-left">
-              <i class="icon-prev"></i>
+            <div class="icon i-left" :class="disableCls">
+              <i class="icon-prev" @click="prev"></i>
             </div>
-            <div class="icon i-center">
-              <i class="icon-play"></i>
+            <div class="icon i-center" :class="disableCls">
+              <i :class="playIcon" @click="togglePlaying"></i>
             </div>
-            <div class="icon i-right">
-              <i class="icon-next"></i>
+            <div class="icon i-right" :class="disableCls">
+              <i class="icon-next" @click="next"></i>
             </div>
             <div class="icon i-right">
               <i class="icon icon-not-favorite"></i>
@@ -55,18 +63,22 @@
     <transition name="mini">
       <div class="mini-player" v-show="!fullScreen" @click="open">
         <div class="icon">
-          <img width="40" height="40" :src="currentSong.image">
+          <img width="40" height="40" :src="currentSong.image" :class="cdCls">
         </div>
         <div class="text">
           <h2 class="name" v-html="currentSong.name"></h2>
           <p class="desc" v-html="currentSong.singer"></p>
         </div>
-        <div class="control"></div>
+        <div class="control">
+          <i :class="miniIcon" @click.stop="togglePlaying"></i>
+        </div>
         <div class="control">
           <i class="icon-playlist"></i>
         </div>
       </div>
     </transition>
+    <!-- 音乐播放器，监听了几个事件 -->
+    <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error" @timeupdate="updateTime"></audio>
   </section>
 </template>
 
@@ -78,11 +90,31 @@
   const transform = prefixStyle('transform')    // 添加前缀
 
   export default {
+    data() {
+      return {
+        songReady: false,        // 解决上下切换歌曲太快，造成不必要的问题
+        currentTime: 0          // 进度条当前时间
+      }
+    },
     computed: {
+      cdCls() {
+        return this.playing ? 'play' : 'play pause'
+      },
+      playIcon() {      // 播放 || 暂停，图标切换
+        return this.playing ? 'icon-pause' : 'icon-play'
+      },
+      miniIcon() {     // 收起状态，播放暂停图标
+        return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
+      },
+      disableCls() {    // 禁用按钮
+        return this.songReady ? '' : 'disable'
+      },
       ...mapGetters([
         'fullScreen',
         'playlist',
-        'currentSong'
+        'currentSong',
+        'playing',
+        'currentIndex'
       ])
     },
     methods: {
@@ -121,15 +153,19 @@
       afterEnter() {    // 回调清空动画
         animations.unregisterAnimation('move')
         this.$refs.cdWrapper.style.animation = ''
-        this.$refs.cdWrapper.style.transition = ''
-        this.$refs.cdWrapper.style[transform] = ''
       },
       leave(el, done) {     // 离开，图片从大变小
-        let cdWrapper = this.$refs.cdWrapper
+        let cdWrappers = this.$refs.cdWrapper
+        // 下面代码，如果用户在进入动画还没执行完就执行离开动画，那就无法执行到回调清除，所以我在这里判断清除
+        if (cdWrappers.style.animation) {
+          animations.unregisterAnimation('move')
+          cdWrappers.style.animation = ''
+        }
+        // ----------------------------------------------------------
         const {x, y, scale} = this._getPosAndScale()
-        cdWrapper.style.transition = 'all 0.4s'
-        cdWrapper.style[transform] = `translate3d(${x}px, ${y}px, 0) scale(${scale})`   // 到这个位置去
-        cdWrapper.addEventListener('transitionend', done)
+        cdWrappers.style.transition = 'all 0.4s'
+        cdWrappers.style[transform] = `translate3d(${x}px, ${y}px, 0) scale(${scale})`   // 到这个位置去
+        cdWrappers.addEventListener('transitionend', done)
       },
       afterLeave() {      // 回调清空
         this.$refs.cdWrapper.style.transition = ''
@@ -146,9 +182,78 @@
         const y = window.innerHeight - paddingTop - (width / 2) - paddingBottom
         return {x, y, scale}
       },
+      togglePlaying() {         // 音乐播放暂停按钮
+        this.setPlayingState(!this.playing)     // 获取状态取反，设置进去
+      },
+      next() {          // 下一首
+        if (!this.songReady) {      // 解决切换太快，如果没有播放，就return
+          return
+        }
+        let index = this.currentIndex + 1
+        if (index === this.playlist.length) {
+          index = 0
+        }
+        this.setCurrentIndex(index)
+        if (!this.playing) {
+          this.togglePlaying()
+        }
+        this.songReady = false      // 点了之后设置为false
+      },
+      prev() {        // 上一首
+        if (!this.songReady) {      // 解决切换太快，如果没有播放，就return
+          return
+        }
+        let index = this.currentIndex - 1
+        if (index === -1) {
+          index = this.playlist.length - 1
+        }
+        this.setCurrentIndex(index)
+        if (!this.playing) {
+          this.togglePlaying()
+        }
+        this.songReady = false      // 点了之后设置为false
+      },
+      ready() {       // 音乐确定播放执行后，为true
+        this.songReady = true
+      },
+      error() {     // 如果歌曲加载失败，为了不影响整个代码，所以设置为true
+        this.songReady = true
+      },
+      updateTime(e) {     // 监听进度更新
+        this.currentTime = e.target.currentTime
+      },
+      format(interval) {        // 处理进度时间戳
+        interval = interval | 0
+        const minute = interval / 60 | 0            // 分
+        const second = this._pad(interval % 60)     // 秒，补零
+        return `${minute}:${second}`
+      },
+      _pad(num, n = 2) {      // 进度时间，补零，事件保存两位 n = 2
+        let len = num.toString().length
+        while (len < n) {
+          num = '0' + num
+          len++
+        }
+        return num
+      },
       ...mapMutations({
-        setFullScreen: 'SET_FULL_SCREEN'
+        setFullScreen: 'SET_FULL_SCREEN',
+        setPlayingState: 'SET_PLAYING_STATE',
+        setCurrentIndex: 'SET_CURRENT_INDEX'
       })
+    },
+    watch: {
+      currentSong() {
+        this.$nextTick(() => {
+          this.$refs.audio.play()       // 监听数据变化，执行音乐播放
+        })
+      },
+      playing(newPlaying) {       // 监听播放状态改变，执行播放和暂停
+        this.$nextTick(() => {
+          const audio = this.$refs.audio
+          newPlaying ? audio.play() : audio.pause()
+        })
+      }
     }
   }
 </script>
@@ -234,9 +339,11 @@
               box-sizing: border-box;
               border: 10px solid rgba(255, 255, 255, 0.1);
               border-radius: 50%;
+              // 中间唱片图片旋转动画
               &.play {
                 animation: rotate 20s linear infinite;
               }
+              // 暂停
               &.pause {
                 animation-play-state: paused;
               }

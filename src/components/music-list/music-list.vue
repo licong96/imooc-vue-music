@@ -90,7 +90,7 @@
         this.$router.back()
       },
       selectItem (item, index) {    // 子组件事件，打开播放器
-        console.log(item)
+        console.log(item, index)
         this.selectPlay({
           list: this.songs,     // list事整个数据
           index
